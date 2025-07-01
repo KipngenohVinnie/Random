@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spin and Assign Number</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background: #f4f4f4;
+    }
+    h1 {
+      color: #344669;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 250px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #2DA581;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: gray;
+      cursor: not-allowed;
+    }
+    .result {
+      font-size: 24px;
+      margin-top: 30px;
+      color: #B87B0E;
+    }
+    .assigned-list {
+      margin-top: 20px;
+      color: #231F20;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎯 Spin & Assign Number</h1>
+
+  <input type="text" id="nameInput" placeholder="Enter your name" />
+  <br>
+  <button onclick="assignNumber()" id="spinBtn">Click to pick your number</button>
+
+  <div class="result" id="result"></div>
+  <div class="assigned-list" id="assignedList"></div>
+
+  <script>
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbx26Jqna_GtTXRivL7mmLEflUv6uQpqD_acfwV21-SWQifNl9_A6Gd-g0KiGb72bxJ8VA/exec";
+    let numbers = [1,2,3,4,5,6,7,8,9,10];
+    let assigned = {}; // stores { name: number }
+
+    function assignNumber() {
+      const nameInput = document.getElementById('nameInput');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        alert("Please enter your name before picking a number.");
+        return;
+      }
+
+      if (assigned[name]) {
+        document.getElementById('result').textContent = `${name}, you have already been given number ${assigned[name]}`;
+      } else {
+        if (numbers.length === 0) {
+          document.getElementById('result').textContent = "All numbers have been assigned!";
+          document.getElementById('spinBtn').disabled = true;
+          return;
+        }
+        const index = Math.floor(Math.random() * numbers.length);
+        const selected = numbers.splice(index, 1)[0];
+        assigned[name] = selected;
+
+        document.getElementById('result').textContent = `${name}, you have been given number ${selected}`;
+
+        // Send to Google Sheets via Web App
+        fetch(webAppUrl, {
+          method: "POST",
+          body: JSON.stringify({ name, number: selected }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }).then(res => console.log("Logged to sheet")).catch(err => console.error(err));
+      }
+
+      updateAssignedList();
+      nameInput.value = '';
+    }
+
+    function updateAssignedList() {
+      const assignedDiv = document.getElementById('assignedList');
+      let list = "<strong>Assigned so far:</strong><br>";
+      for (let name in assigned) {
+        list += `${name} → ${assigned[name]}<br>`;
+      }
+      assignedDiv.innerHTML = list;
+    }
+  </script>
+
+</body>
+</html>
